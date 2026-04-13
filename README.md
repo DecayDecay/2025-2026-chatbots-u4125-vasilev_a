@@ -27,7 +27,6 @@ sbox-terminal/
 ├── packages/
 │   └── db/         — Prisma ORM + PostgreSQL (схема, миграции)
 ├── deploy/         — Скрипты деплоя на Raspberry Pi 4
-├── reports/        — Лабораторные работы ИТМО (docx)
 └── scripts/        — Бэкап БД, установка планировщика
 ```
 
