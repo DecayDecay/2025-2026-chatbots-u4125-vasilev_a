@@ -1,0 +1,143 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sbox}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sbox}
+      POSTGRES_DB: ${POSTGRES_DB:-sbox}
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - wal_compression=on
+      - -c
+      - max_connections=20
+      - -c
+      - synchronous_commit=off
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sbox}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --maxmemory
+      - 96mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --appendonly
+      - "no"
+      - --save
+      - "3600 1"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sbox}:${POSTGRES_PASSWORD:-sbox}@postgres:5432/${POSTGRES_DB:-sbox}?schema=public
+      REDIS_URL: redis://redis:6379
+      NODE_OPTIONS: --max-old-space-size=192
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sbox}:${POSTGRES_PASSWORD:-sbox}@postgres:5432/${POSTGRES_DB:-sbox}?schema=public
+      REDIS_URL: redis://redis:6379
+      NODE_OPTIONS: --max-old-space-size=256
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  bot:
+    build:
+      context: .
+      dockerfile: apps/bot/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sbox}:${POSTGRES_PASSWORD:-sbox}@postgres:5432/${POSTGRES_DB:-sbox}?schema=public
+      NODE_OPTIONS: --max-old-space-size=128
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+volumes:
+  pgdata:
+  redisdata:

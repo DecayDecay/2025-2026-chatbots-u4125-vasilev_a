@@ -1,0 +1,28 @@
+{
+  "name": "@sbox/worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node --enable-source-maps dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "run:catalog": "tsx src/cli.ts catalog",
+    "run:snapshot": "tsx src/cli.ts snapshot",
+    "run:history": "tsx src/cli.ts history",
+    "run:orderbook": "tsx src/cli.ts orderbook"
+  },
+  "dependencies": {
+    "@sbox/db": "workspace:*",
+    "bullmq": "^5.21.0",
+    "ioredis": "^5.4.1",
+    "pino": "^9.5.0",
+    "playwright": "^1.59.1",
+    "undici": "^6.20.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

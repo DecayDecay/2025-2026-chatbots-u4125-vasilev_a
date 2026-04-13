@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment (secrets)
+.env
+.env.local
+.env.production
+
+# Build output
+dist/
+.next/
+out/
+
+# Prisma generated client
+packages/db/node_modules/.prisma/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+pgdata/
+
+# Claude Code internal
+.claude/
+
+# Temp / debug
+*.log
+_sbox_metrics.html
